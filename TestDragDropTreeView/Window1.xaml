@@ -1,0 +1,591 @@
+﻿<Window x:Class="TestDragDropTreeView.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:TestDragDropTreeView"
+        Title="Drag-and-Drop TreeView Example"
+        Height="600" 
+        Width="800" 
+        x:Name="TheWindow"
+        MouseWheel="TheWindow_MouseWheel"
+        PreviewMouseWheel="TheWindow_PreviewMouseWheel">
+    <Window.Resources>
+        <local:BindingTagConverter x:Key="Conv"/>
+        <!--#region dimensions-->
+        <sys:Double x:Key="ExpanderButtonWidth">12</sys:Double>
+        <sys:Double x:Key="ExpanderButtonHeight">12</sys:Double>
+        <sys:Double x:Key="TreeItemIconWidth">19</sys:Double>
+        <sys:Double x:Key="TreeItemIconHeight">19</sys:Double>
+        <sys:Double x:Key="TreeItemSpace">5</sys:Double>
+        <sys:Double x:Key="DropAreaHeight">4</sys:Double>
+        <sys:Double x:Key="DropMarkerHeight">1</sys:Double>
+        <!--#endregion-->
+        <!--#region colors-->
+        <Color x:Key="DropAreaBackground">Transparent</Color>
+        <Color x:Key="DropAreaMarker">Gray</Color>
+        <Color x:Key="LineColor">#FF666666</Color>
+        <!--#endregion-->
+        <!--#region brushes-->
+        <SolidColorBrush x:Key="NodeBackground" Color="AliceBlue"/>
+        <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}" />
+        <SolidColorBrush x:Key="DropMarkerBrush" Color="{StaticResource DropAreaMarker}" />
+        <SolidColorBrush x:Key="DropBackgroundBrush" Color="{StaticResource DropAreaBackground}"/>
+        <!--#endregion-->
+        <!--#region control templates-->
+        <ControlTemplate x:Key="IconGroup" TargetType="Label">
+            <Viewbox Margin="2">
+                <Grid >
+                    <Path Data="M1.8540015,22.865997L27.810999,22.865997C28.83297,22.865997,29.665001,23.696991,29.665001,24.719986L29.665001,30.143997C29.665001,31.168991,28.83297,32,27.810999,32L1.8540015,32C0.82702519,32,-7.0242095E-08,31.168991,0,30.143997L0,24.719986C-7.0242095E-08,23.696991,0.82702519,22.865997,1.8540015,22.865997z M1.8540015,11.330994L27.810999,11.330994C28.83297,11.330994,29.665001,12.159988,29.665001,13.18399L29.665001,18.607986C29.665001,19.630997,28.83297,20.462997,27.810999,20.462997L1.8540015,20.462997C0.82800175,20.462997,-7.0242095E-08,19.630997,0,18.607986L0,13.18399C-7.0242095E-08,12.159988,0.82800175,11.330994,1.8540015,11.330994z M5.4589773,2.4589996C4.2999821,2.4589996 3.355037,3.4029999 3.3550373,4.5649872 3.355037,5.7269897 4.2999821,6.6699982 5.4589773,6.6699982 6.61901,6.6699982 7.5629783,5.7269897 7.5629783,4.5649872 7.5629783,3.4029999 6.61901,2.4589996 5.4589773,2.4589996z M1.8540015,0L27.810999,0C28.83297,0,29.665001,0.82998657,29.665001,1.8549957L29.665001,7.2789917C29.665001,8.3009949,28.83297,9.1319885,27.810999,9.1319885L1.8540015,9.1319885C0.82800175,9.1319885,-7.0242095E-08,8.3009949,0,7.2789917L0,1.8549957C-7.0242095E-08,0.82998657,0.82800175,0,1.8540015,0z" Stretch="Uniform" Fill="#FF0A0A0A" Width="12" Height="12" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <TransformGroup>
+                                <TransformGroup.Children>
+                                    <RotateTransform Angle="0" />
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TransformGroup.Children>
+                            </TransformGroup>
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Viewbox>
+        </ControlTemplate>
+        <ControlTemplate x:Key="IconCell" TargetType="Label">
+            <Viewbox Margin="3">
+                <Grid>
+                    <Path Data="M3.6000366,0L28.400024,0C30.400024,0,32,1.6000366,32,3.6000366L32,28.400024C32,30.400024,30.400024,32,28.400024,32L3.6000366,32C1.6000366,32,0,30.400024,0,28.400024L0,3.6000366C0,1.6000366,1.6000366,0,3.6000366,0z" Stretch="Uniform" Fill="#FF0A0A0A" Width="12" Height="12" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <TransformGroup>
+                                <TransformGroup.Children>
+                                    <RotateTransform Angle="0" />
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TransformGroup.Children>
+                            </TransformGroup>
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Viewbox>
+        </ControlTemplate>
+        <ControlTemplate x:Key="IconPlus" TargetType="Label">
+            <Viewbox Margin="2">
+                <Grid>
+                    <Path Data="M12.099998,0L19.799995,0 19.799995,12.1 32,12.1 32,19.799996 19.900002,19.799996 19.900002,31.999999 12.199997,31.999999 12.199997,19.900003 0,19.900003 0,12.199999 12.099998,12.199999z" Stretch="Uniform" Fill="#FF000000" Width="12" Height="12" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <TransformGroup>
+                                <TransformGroup.Children>
+                                    <RotateTransform Angle="0" />
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TransformGroup.Children>
+                            </TransformGroup>
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Viewbox>
+        </ControlTemplate>
+        <ControlTemplate x:Key="IconMinus" TargetType="Label">
+            <Viewbox Margin="2">
+                <Grid>
+                    <Path Data="M0,0L32,0 32,5.3 0,5.3z" Stretch="Uniform" Fill="#FF000000" Width="26" Height="26" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <TransformGroup>
+                                <TransformGroup.Children>
+                                    <RotateTransform Angle="0" />
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TransformGroup.Children>
+                            </TransformGroup>
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Viewbox>
+        </ControlTemplate>
+        <ControlTemplate x:Key="SimpleExpanderButtonTemp" 
+                         TargetType="{x:Type ToggleButton}">
+            <Border x:Name="ExpanderButtonBorder"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="4"
+                    VerticalAlignment="Center"
+                    Padding="{TemplateBinding Padding}">
+                <Grid Margin="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Name="Rect"
+                            Grid.Column="0"
+                            BorderBrush="DarkGray"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Background="White"
+                            Width="{StaticResource ExpanderButtonWidth}"
+                            Height="{StaticResource ExpanderButtonHeight}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top">
+                        <Label x:Name="PART_Icon" Template="{StaticResource IconPlus}"/>
+                    </Border>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <!--Change the sign to minus when toggled-->
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="PART_Icon" Property="Template" Value="{StaticResource IconMinus}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="False">
+                    <Setter TargetName="PART_Icon" Property="Template" Value="{StaticResource IconPlus}"/>
+                </Trigger>
+                <!-- MouseOver, Pressed behaviours-->
+                <Trigger Property="IsMouseOver" Value="true">
+                    <Setter Property="BorderBrush" Value="#FF3C7FB1" TargetName="Rect"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="true">
+                    <Setter Property="BorderBrush" Value="#FF526C7B" TargetName="Rect"/>
+                    <Setter Property="BorderThickness" Value="1.5" TargetName="Rect"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <ControlTemplate x:Key="SimpleExpanderTemp" TargetType="{x:Type Expander}">
+            <Grid Margin="0" VerticalAlignment="Top">
+                <Grid.RowDefinitions>
+                    <!--<RowDefinition Height="Auto"/>-->
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Width="{StaticResource TreeItemIconWidth}"
+                      Height="{StaticResource TreeItemIconHeight}">
+                    <Border x:Name="PART_TopLine" Margin="8.5,0,0,0" VerticalAlignment="Top" Height="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="1,0,0,0"/>
+                    <Border x:Name="PART_HorizontalLine" Margin="8.5,9,0,0"  BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"/>
+                    <Border x:Name="PART_MiddleLine" Margin="8.5,9,0,0" BorderBrush="{StaticResource LineBrush}" BorderThickness="1,0,0,0"/>
+                </Grid>
+                <Grid Grid.Column="1" Width="{StaticResource TreeItemSpace}">
+                    <Border x:Name="PART_HorizontalLine2" Margin="0,9,0,0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource LineBrush}"/>
+                </Grid>
+                <ToggleButton x:Name="ExpanderButton"
+                              Template="{StaticResource SimpleExpanderButtonTemp}"
+                              IsChecked="{Binding IsExpanded}"
+                              OverridesDefaultStyle="True"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+
+                              Padding="0"/>
+                <Label Content="{TemplateBinding Header}" Grid.Column="2" Padding="0" HorizontalContentAlignment="Stretch"></Label>
+
+                <Border Grid.Row="1" Margin="8.5,0,0,0" x:Name="PART_VerticalLine" BorderBrush="{StaticResource LineBrush}" BorderThickness="1,0,0,0" Visibility="Collapsed"/>
+
+                <ContentPresenter x:Name="ExpanderContent"
+                                  Visibility="Collapsed"
+                                  HorizontalAlignment="Stretch"
+                                  Margin="0"
+                                  Grid.Row="1"
+                                  Grid.Column="2"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                    <Setter TargetName="ExpanderContent" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="PART_VerticalLine" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsTopLevelAndFirstChild}" Value="True">
+                    <Setter TargetName="PART_TopLine" Property="Visibility" Value="Hidden"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsFirstChild}" Value="False">
+                    <Setter TargetName="PART_TopLine" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsLastChild}" Value="True">
+                    <Setter TargetName="PART_MiddleLine" Property="Visibility" Value="Hidden"/>
+                    <Setter TargetName="PART_VerticalLine" Property="Visibility" Value="Hidden"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsLastChild}" Value="False">
+                    <Setter TargetName="PART_MiddleLine" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="PART_VerticalLine" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <!--#endregion-->
+        <!--#region styles-->
+        <Style x:Key="TopDropAreaStyle" TargetType="Label">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Label">
+                        <Grid x:Name="PART_DropArea" 
+                              Height="{TemplateBinding Height}"
+                              Background="{TemplateBinding Background}"
+                              HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Width="{StaticResource TreeItemIconWidth}">
+                                <Border x:Name="PART_VerticalLine" 
+                                        HorizontalAlignment="Left"
+                                        Margin="8.5,0,0,0"
+                                        VerticalAlignment="Top"
+                                        BorderThickness="1" 
+                                        Width="1" 
+                                        Height="{StaticResource ExpanderButtonHeight}" 
+                                        BorderBrush="{StaticResource LineBrush}"/>
+                            </Grid>
+                            <ContentPresenter Grid.Column="1"/>
+
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <!--<DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}, Path=IsDragInProgress}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_DropArea"
+                                                                             Storyboard.TargetProperty="(FrameworkElement.Height)"
+                                                                             To="10"
+                                                                             Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_DropArea"
+                                                                     Storyboard.TargetProperty="(FrameworkElement.Height)"
+                                                                     To="0"
+                                                                     Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>-->
+                            <DataTrigger Binding="{Binding IsTopLevelAndFirstChild}" Value="True">
+                                <Setter TargetName="PART_VerticalLine" Property="Visibility" Value="Hidden"/>
+                            </DataTrigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Background" Value="{StaticResource DropBackgroundBrush}"/>
+        </Style>
+        <Style x:Key="BottomDropAreaStyle" TargetType="Label">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Label">
+                        <Grid x:Name="PART_DropArea" 
+                              Height="{TemplateBinding Height}"
+                              Background="{TemplateBinding Background}"
+                              HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Width="{StaticResource TreeItemIconWidth}">
+                                <Border x:Name="PART_VerticalLine" 
+                                        HorizontalAlignment="Left"
+                                        Margin="8.5,0,0,0"
+                                        VerticalAlignment="Top"
+                                        BorderThickness="1" 
+                                        Width="1" 
+                                        Height="{StaticResource ExpanderButtonHeight}" 
+                                        BorderBrush="{StaticResource LineBrush}"/>
+                            </Grid>
+                            <ContentPresenter Grid.Column="1"/>
+
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <!--<DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}, Path=IsDragInProgress}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_DropArea"
+                                                                             Storyboard.TargetProperty="(FrameworkElement.Height)"
+                                                                             To="10"
+                                                                             Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_DropArea"
+                                                                     Storyboard.TargetProperty="(FrameworkElement.Height)"
+                                                                     To="0"
+                                                                     Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>-->
+                            <DataTrigger Binding="{Binding IsLastChild}" Value="True">
+                                <Setter TargetName="PART_VerticalLine" Property="Visibility" Value="Hidden"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Background" Value="{StaticResource DropBackgroundBrush}"/>
+        </Style>
+        <Style x:Key="TreeViewItemStyle" TargetType="TreeViewItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeViewItem">
+                        <Grid Margin="0" VerticalAlignment="Top">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label x:Name="PART_TopDropArea"
+                                   Grid.Column="1"
+                                   Tag="Top"
+                                   Height="{StaticResource DropAreaHeight}"
+                                   Style="{StaticResource TopDropAreaStyle}">
+                                <Grid>
+                                    <Border x:Name="PART_TopDropIndicator" 
+                                            Background="{StaticResource DropMarkerBrush}" 
+                                            Height="{StaticResource DropMarkerHeight}" 
+                                            Visibility="Hidden" 
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Label>
+                            <Grid x:Name="PART_Group" 
+                                  Grid.Row="1" 
+                                  Grid.Column="1" >
+
+                                <Expander Grid.Column="1"
+                                          x:Name="PART_GroupExpander"
+                                          IsExpanded="{Binding IsExpanded}" 
+                                          Template="{StaticResource SimpleExpanderTemp}">
+                                    <Expander.Header>
+                                        <ContentPresenter  ContentSource="Header" HorizontalAlignment="Stretch" />
+                                    </Expander.Header>
+                                    <ItemsPresenter/>
+                                </Expander>
+                            </Grid>
+                            <Grid x:Name="PART_Cell" 
+                                  Grid.Row="1" 
+                                  Grid.Column="1"
+                                  Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Width="{StaticResource TreeItemIconWidth}">
+                                    <Border x:Name="PART_TopLine" Margin="8.5,0,0,9" BorderThickness="1,0,0,0" BorderBrush="{StaticResource LineBrush}"/>
+                                    <Border x:Name="PART_HorizontalLine" Margin="9,9,0,0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource LineBrush}"/>
+                                    <Border x:Name="PART_BottomLine" Margin="8.5,9,0,0" BorderThickness="1,0,0,0" BorderBrush="{StaticResource LineBrush}"/>
+                                </Grid>
+
+                                <Grid Grid.Column="1" Width="{StaticResource TreeItemSpace}">
+                                    <Border x:Name="PART_HorizontalLine2" Margin="0,9,0,0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource LineBrush}"/>
+                                </Grid>
+
+                                <ContentPresenter ContentSource="Header" Grid.Column="2"/>
+                            </Grid>
+                            <Label x:Name="PART_BottomDropArea"
+                                   Height="{StaticResource DropAreaHeight}"
+                                   Style="{StaticResource BottomDropAreaStyle}" 
+                                   Grid.Row="2" 
+                                   Tag="Bottom"
+                                   Grid.Column="1">
+                                <Grid>
+                                    <Border x:Name="PART_BottomDropIndicator" 
+                                            Background="{StaticResource DropMarkerBrush}" 
+                                            Height="{StaticResource DropMarkerHeight}"  
+                                            Visibility="Hidden" 
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Label>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsFirstChild}" Value="true">
+                                <Setter TargetName="PART_TopDropArea" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsFirstChild}" Value="false">
+                                <Setter TargetName="PART_TopDropArea" Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsGroup}" Value="false">
+                                <Setter TargetName="PART_Group" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="PART_Cell" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropArea}" Value="Top">
+                                <!--<Setter TargetName="PART_TopDropArea" Property="Background" Value="Gold"/>-->
+                                <Setter TargetName="PART_TopDropIndicator" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropArea}" Value="Bottom">
+                                <Setter TargetName="PART_BottomDropIndicator" Property="Visibility" Value="Visible"/>
+                                <!--<Setter TargetName="PART_BottomDropArea" Property="Background" Value="Gold"/>-->
+                            </DataTrigger>
+
+                            <!--<DataTrigger Binding="{Binding DropArea}" Value="Center">
+                                <Setter TargetName="PART_GroupExpander" Property="IsExpanded" Value="True"/>
+                            </DataTrigger>-->
+                            
+                            <DataTrigger Binding="{Binding IsTopLevelAndFirstChild}" Value="True">
+                                <Setter TargetName="PART_TopLine" Property="Visibility" Value="Hidden"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsTopLevelAndFirstChild}" Value="False">
+                                <Setter TargetName="PART_TopLine" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsLastChild}" Value="True">
+                                <Setter TargetName="PART_BottomLine" Property="Visibility" Value="Hidden"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="AllowDrop" Value="True" />
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <!--#endregion-->
+        <HierarchicalDataTemplate x:Key="TreeViewItemTemplate" ItemsSource="{Binding Path=Children}">
+            <Grid VerticalAlignment="Top" Margin="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <!--#region icon-->
+                <Grid Width="{StaticResource ExpanderButtonWidth}">
+                    <Border BorderThickness="0,1,0,0" 
+                            BorderBrush="{StaticResource LineBrush}" 
+                            VerticalAlignment="Center" 
+                            HorizontalAlignment="Left" 
+                            Height="1" 
+                            Width="8"></Border>
+                    <Label x:Name="PART_Icon"
+                           Margin="0,0,0,0"
+                           Width="{StaticResource ExpanderButtonWidth}"
+                           Height="{StaticResource ExpanderButtonHeight}"
+                           Template="{StaticResource IconCell}"/>
+                </Grid>
+                <!--#endregion-->
+                <Grid Margin="0" Grid.Column="1" x:Name="PART_TheBorder" HorizontalAlignment="Stretch">
+                    <TextBlock x:Name="PART_TextArea"
+                               Text="{Binding Path=Name}" 
+                               Grid.Row="1" 
+                               Height="{StaticResource TreeItemIconHeight}" 
+                               Margin="5,0,0,0" 
+                               Padding="0">
+                        <TextBlock.ToolTip>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding Name}" ContentStringFormat="Name: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="1">
+                                    <Label Content="{Binding Parent.Name}" ContentStringFormat="Parent: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="2">
+                                    <Label Content="{Binding Index}" ContentStringFormat="Index: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="3">
+                                    <Label Content="{Binding Depth}" ContentStringFormat="Depth: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="4">
+                                    <Label Content="{Binding IsFirstChild}" ContentStringFormat="IsFirstChild: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="5">
+                                    <Label Content="{Binding IsLastChild}" ContentStringFormat="IsLastChild: {0} "/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="6">
+                                    <Label Content="{Binding IsTopLevelAndFirstChild}" ContentStringFormat="IsTopLevelAndFirstChild: {0} "/>
+                                </StackPanel>
+                            </Grid>
+                        </TextBlock.ToolTip>
+                    </TextBlock>
+                </Grid>
+            </Grid>
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsGroup}" Value="True">
+                    <Setter TargetName="PART_Icon" Property="Template" Value="{StaticResource IconGroup}"/>
+                </DataTrigger>
+                <!--<DataTrigger Binding="{Binding IsCell}" Value="True">
+                    <Setter TargetName="PART_Icon" Property="Margin" Value="17.5,0,0,0"/>
+                </DataTrigger>-->
+                <DataTrigger Binding="{Binding IsCell}" Value="True">
+                    <Setter TargetName="PART_Icon" Property="Content" Value="{StaticResource IconCell}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="PART_TheBorder" Property="Background" Value="OliveDrab"/>
+                    <Setter TargetName="PART_TextArea" Property="Foreground" Value="White"/>
+                    <Setter TargetName="PART_TextArea" Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DropArea}" Value="Center">
+                    <Setter TargetName="PART_TheBorder" Property="Background" Value="{StaticResource DropMarkerBrush}"/>
+                    <!--<Setter TargetName="PART_BottomDropArea" Property="Background" Value="Gold"/>-->
+                </DataTrigger>
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+    </Window.Resources>
+    <TabControl>
+        <TabItem Header="Expander">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="86*"/>
+                    <ColumnDefinition Width="23*"/>
+                    <ColumnDefinition Width="678*"/>
+                </Grid.ColumnDefinitions>
+                <Expander IsExpanded="True" Header="Header" Template="{StaticResource SimpleExpanderTemp}" Margin="40,40" Grid.ColumnSpan="3">
+                    <Border Margin="0"></Border>
+                </Expander>
+            </Grid>
+        </TabItem>
+        <TabItem Header="TreeView" IsSelected="True">
+            <Grid DataContext="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Margin="4">
+                    <Button Content="Add Group" x:Name="btnAddGroup_" Click="btnAddGroup__Click"/>
+                    <Button Content="Add Cell" x:Name="btnAddCell_" Click="btnAddCell__Click" Margin="4,0,0,0"/>
+                </StackPanel>
+
+                <TreeView ItemsSource="{Binding Path=Root.Children,ElementName=TheWindow}"
+                          Padding="0"
+                          x:Name="TheTreeView"
+                          MouseDown="TreeView_MouseDown"
+                          MouseMove="TreeView_MouseMove"
+                          MouseWheel="TreeView_MouseWheel"
+                          DragEnter="TheTreeView_CheckDropTarget"
+                          DragLeave="TheTreeView_CheckDropTarget"
+                          DragOver="TheTreeView_CheckDropTarget"
+                          Drop="TheTreeView_Drop"
+                          BorderThickness="0"
+                          Grid.Row="1" 
+                          RenderTransformOrigin="0.5,0.5" 
+                          SelectedItemChanged="TheTreeView_SelectedItemChanged"
+                          ItemContainerStyle="{StaticResource TreeViewItemStyle}"
+                          ItemTemplate="{StaticResource TreeViewItemTemplate}"
+                          PreviewMouseWheel="TheTreeView_PreviewMouseWheel">
+                    <TreeView.LayoutTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}"/>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </TreeView.LayoutTransform>
+                </TreeView>
+
+                <Slider Grid.Row="2" Minimum="1" Maximum="5" Value="{Binding Scale}"/>
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Window>
+
+    
